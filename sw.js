@@ -3828,7 +3828,12 @@ footer { max-width: 1280px; margin: 24px auto 16px; padding: 8px 16px 0;
       this.detail = detail;
     }
   };
-  function layout(title, body, jsonUrl = null, active = "") {
+  var BANNER_CSS = `<style>.snapshot-banner { background: color-mix(in srgb, var(--draw) 18%, var(--bg)); color: var(--fg);
+  border-bottom: 1px solid color-mix(in srgb, var(--draw) 45%, transparent); padding: 8px 16px; font-size: 13px; text-align: center; }
+.snapshot-banner b { color: var(--draw); }</style>`;
+  var READ_ONLY_BANNER = "<b>Read-only snapshot.</b> The tokenz arena was frozen on 2026-10-09: nothing can be submitted, promoted, edited or uploaded here.";
+  var COMPARE_BANNER = "<b>Not available in this snapshot.</b> Comparisons are computed from every game's in-game metrics, which the snapshot doesn't include. Each game's own metrics are on its page, computed when your browser re-runs it.";
+  function layout(title, body, jsonUrl = null, active = "", banner = "") {
     const links = NAV.map(([href, label]) => `<a class="l${href === active ? " on" : ""}" href="${href}">${label}</a>`).join("");
     const urls = typeof jsonUrl === "string" ? [jsonUrl] : jsonUrl || [];
     const foot = urls.map((u) => `<a href="${e(u)}">${e(u)}</a>`).join(" \xB7 ");
@@ -3842,7 +3847,8 @@ footer { max-width: 1280px; margin: 24px auto 16px; padding: 8px 16px 0;
 </head>
 <body>
 <nav class="top"><a class="brand" href="/">tokenz-arena</a>${links}</nav>
-<main>
+${banner ? `${BANNER_CSS}<div class="snapshot-banner">${banner}</div>
+` : ""}<main>
 ${body}
 </main>
 <footer>Times are ${TZ_LABEL} (UTC${TZ_HOURS >= 0 ? "+" : ""}${TZ_HOURS}). ${foot ? "JSON: " + foot + " \xB7 " : ""}<a href="/llms.txt">/llms.txt</a> \xB7
@@ -4891,7 +4897,7 @@ f.onsubmit = async (ev) => {
   } finally { b.disabled = false; }
 };
 <\/script>`;
-    return layout("Submit", body, "/api/v1/submissions", "/submit");
+    return layout("Submit", body, "/api/v1/submissions", "/submit", READ_ONLY_BANNER);
   }
   async function serverPage() {
     const body = `<h1>Competition server</h1><div class="flash">The server bridge isn't configured on this arena (no server key), so there's nothing to show.</div>`;
@@ -5079,7 +5085,7 @@ td.a { color: #2f7fd6; } td.b { color: #d9822b; } th.a { color: #2f7fd6; } th.b 
 <label>map<input name="map" value="${e(map)}" placeholder="all maps" size="16"></label>
 <button>Compare</button><datalist id="cmp-subs">${options}</datalist></form>`;
     const intro = `<h1>Compare</h1><p class="sub">Two bots from their games' in-game metrics, each from its own seat: per map, every 10 rounds, how their queens die, and early (1-150) vs mid (151-350) vs late (351-500).</p>`;
-    if (!(a && b)) return layout("Compare", `<style>${CSS2}</style>${intro}${form}`, "/api/v1/compare", "/compare");
+    if (!(a && b)) return layout("Compare", `<style>${CSS2}</style>${intro}${form}`, "/api/v1/compare", "/compare", COMPARE_BANNER);
     if (!["all", "h2h"].includes(scope)) scope = "all";
     const resolve = (sid) => {
       const real = D.resolve(sid);
@@ -5088,12 +5094,7 @@ td.a { color: #2f7fd6; } td.b { color: #d9822b; } th.a { color: #2f7fd6; } th.b 
     };
     const A = resolve(a), B = resolve(b);
     const link = "/compare?" + urlencode({ a: A, b: B, scope, map });
-    return layout(
-      "Compare",
-      `<style>${CSS2}</style>${intro}${form}<div class="flash">Comparisons aren't available in this snapshot of the arena: they're computed from every game's in-game metrics, which the snapshot doesn't include. Each game's own metrics are on its page, computed when the browser re-runs it.</div>`,
-      link.replace("/compare", "/api/v1/compare"),
-      "/compare"
-    );
+    return layout("Compare", `<style>${CSS2}</style>${intro}${form}`, link.replace("/compare", "/api/v1/compare"), "/compare", COMPARE_BANNER);
   }
 
   // sw-src/web/evals.js

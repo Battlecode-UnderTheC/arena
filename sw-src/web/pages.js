@@ -157,7 +157,15 @@ export class HTTPError extends Error {
   constructor(status, detail) { super(detail); this.status = status; this.detail = detail; }
 }
 
-export function layout(title, body, jsonUrl = null, active = "") {
+// A notice across the top of a page (this snapshot's own addition: what it can't do)
+const BANNER_CSS = `<style>.snapshot-banner { background: color-mix(in srgb, var(--draw) 18%, var(--bg)); color: var(--fg);
+  border-bottom: 1px solid color-mix(in srgb, var(--draw) 45%, transparent); padding: 8px 16px; font-size: 13px; text-align: center; }
+.snapshot-banner b { color: var(--draw); }</style>`;
+export const READ_ONLY_BANNER = "<b>Read-only snapshot.</b> The tokenz arena was frozen on 2026-10-09: nothing can be submitted, promoted, edited or uploaded here.";
+export const COMPARE_BANNER = "<b>Not available in this snapshot.</b> Comparisons are computed from every game's in-game metrics, which the snapshot "
+  + "doesn't include. Each game's own metrics are on its page, computed when your browser re-runs it.";
+
+export function layout(title, body, jsonUrl = null, active = "", banner = "") {
   const links = NAV.map(([href, label]) => `<a class="l${href === active ? " on" : ""}" href="${href}">${label}</a>`).join("");
   const urls = typeof jsonUrl === "string" ? [jsonUrl] : (jsonUrl || []);
   const foot = urls.map((u) => `<a href="${e(u)}">${e(u)}</a>`).join(" · ");
@@ -171,7 +179,7 @@ export function layout(title, body, jsonUrl = null, active = "") {
 </head>
 <body>
 <nav class="top"><a class="brand" href="/">tokenz-arena</a>${links}</nav>
-<main>
+${banner ? `${BANNER_CSS}<div class="snapshot-banner">${banner}</div>\n` : ""}<main>
 ${body}
 </main>
 <footer>Times are ${TZ_LABEL} (UTC${TZ_HOURS >= 0 ? "+" : ""}${TZ_HOURS}). ${foot ? "JSON: " + foot + " · " : ""}<a href="/llms.txt">/llms.txt</a> ·
@@ -1168,7 +1176,7 @@ f.onsubmit = async (ev) => {
   } finally { b.disabled = false; }
 };
 </script>`;
-  return layout("Submit", body, "/api/v1/submissions", "/submit");
+  return layout("Submit", body, "/api/v1/submissions", "/submit", READ_ONLY_BANNER);
 }
 
 export { QUEUE_BODY } from "./queue.js";

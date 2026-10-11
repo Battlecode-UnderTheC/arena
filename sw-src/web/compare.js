@@ -1,7 +1,7 @@
 // arena/web/compare.py. The per-game metric series it charts aren't in this snapshot, so a
 // comparison says it's unavailable (the form stays).
 import { e, urlencode } from "../py.js";
-import { layout, HTTPError, pyRepr } from "./pages.js";
+import { layout, HTTPError, pyRepr, COMPARE_BANNER } from "./pages.js";
 
 const CSS = `
 .cmp-form { display: flex; flex-wrap: wrap; gap: 8px; align-items: end; margin: 8px 0 16px; }
@@ -31,7 +31,7 @@ export async function comparePage(D, p) {
 <button>Compare</button><datalist id="cmp-subs">${options}</datalist></form>`;
   const intro = '<h1>Compare</h1><p class="sub">Two bots from their games\' in-game metrics, each from its own seat: '
     + "per map, every 10 rounds, how their queens die, and early (1-150) vs mid (151-350) vs late (351-500).</p>";
-  if (!(a && b)) return layout("Compare", `<style>${CSS}</style>${intro}${form}`, "/api/v1/compare", "/compare");
+  if (!(a && b)) return layout("Compare", `<style>${CSS}</style>${intro}${form}`, "/api/v1/compare", "/compare", COMPARE_BANNER);
   if (!["all", "h2h"].includes(scope)) scope = "all";
   const resolve = (sid) => {
     const real = D.resolve(sid);
@@ -40,8 +40,5 @@ export async function comparePage(D, p) {
   };
   const A = resolve(a), B = resolve(b);
   const link = "/compare?" + urlencode({ a: A, b: B, scope, map });
-  return layout("Compare", `<style>${CSS}</style>${intro}${form}<div class="flash">Comparisons aren't available in this snapshot of the arena: `
-    + "they're computed from every game's in-game metrics, which the snapshot doesn't include. Each game's own metrics are on its "
-    + "page, computed when the browser re-runs it.</div>",
-    link.replace("/compare", "/api/v1/compare"), "/compare");
+  return layout("Compare", `<style>${CSS}</style>${intro}${form}`, link.replace("/compare", "/api/v1/compare"), "/compare", COMPARE_BANNER);
 }
