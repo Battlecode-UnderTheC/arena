@@ -5,6 +5,7 @@ import * as SQLite from "wa-sqlite/src/sqlite-api.js";
 import * as VFS from "wa-sqlite/src/VFS.js";
 
 const BLOCK = 64 << 10;
+const EXPORTED_URL = "https://battlecode-underthec.github.io/tokenz-arena-pages";
 
 // JSON.parse, keeping 64-bit integers (seeds) exact: as strings
 export const parse = (text) => JSON.parse(text.replace(/([:\[,]\s*)(-?\d{16,})(?=\s*[,}\]])/g, '$1"$2"'));
@@ -127,7 +128,9 @@ class Data {
   async kv(key) {
     if (!this.kvCache.has(key)) {
       const [r] = await this.query("SELECT value FROM kv WHERE key = ?", [key]);
-      this.kvCache.set(key, r ? parse(r.value) : null);
+      // the exporter wrote the site's address into llms.txt and the docs: use where it's served now
+      const text = r ? r.value.split(EXPORTED_URL).join(new URL(this.base).href.replace(/\/$/, "")) : null;
+      this.kvCache.set(key, text ? parse(text) : null);
     }
     return this.kvCache.get(key);
   }

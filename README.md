@@ -1,7 +1,7 @@
-# tokenz-arena-pages
+# arena
 
 The tokenz team arena (unswbc dragons bots), frozen when it shut down on 2026-10-09 and served from
-GitHub Pages. The pages are the arena's own website, unchanged: its backend runs in the browser.
+GitHub Pages at https://battlecode-underthec.github.io/arena/. The pages are the arena's own website, unchanged: its backend runs in the browser.
 
 ## How it works
 
@@ -41,7 +41,7 @@ cheapest to rebuild and later replays its input into a new sandbox (exact).
 | `data/site/` | site.db in chunks |
 | `wasm/`, `maps/`, `source/` | bots' metered wasm and the engine, maps by sha256, submissions' zips |
 | `exporter/` | `export.py` (bots' wasm), `backend_data.py` (site.db), `pack.py` (chunks, maps, zips) |
-| `tools/serve.mjs` | a local stand-in for Pages: `node tools/serve.mjs 8000`, then http://localhost:8000/tokenz-arena-pages/ |
+| `tools/serve.mjs` | a local stand-in for Pages: `node tools/serve.mjs 8000`, then http://localhost:8000/arena/ |
 
 ## Building
 

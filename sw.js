@@ -3039,6 +3039,7 @@
 
   // sw-src/db.js
   var BLOCK = 64 << 10;
+  var EXPORTED_URL = "https://battlecode-underthec.github.io/tokenz-arena-pages";
   var parse = (text2) => JSON.parse(text2.replace(/([:\[,]\s*)(-?\d{16,})(?=\s*[,}\]])/g, '$1"$2"'));
   var HttpVFS = class extends Base {
     name = "http";
@@ -3190,7 +3191,8 @@
     async kv(key) {
       if (!this.kvCache.has(key)) {
         const [r] = await this.query("SELECT value FROM kv WHERE key = ?", [key]);
-        this.kvCache.set(key, r ? parse(r.value) : null);
+        const text2 = r ? r.value.split(EXPORTED_URL).join(new URL(this.base).href.replace(/\/$/, "")) : null;
+        this.kvCache.set(key, text2 ? parse(text2) : null);
       }
       return this.kvCache.get(key);
     }

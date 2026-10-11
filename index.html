@@ -12,7 +12,7 @@
 // The arena's backend runs in this site's service worker; the first visit installs it.
 (async () => {
   const m = document.getElementById("m");
-  const scope = "/tokenz-arena-pages/";
+  const scope = "/" + location.pathname.split("/")[1] + "/";     // the site: /<repo>/
   if (!("serviceWorker" in navigator)) { m.textContent = "This browser has no service workers, which this site needs."; return; }
   const ctl = navigator.serviceWorker.controller;
   // ours is in control and still sent us here: the URL really isn't one of the arena's

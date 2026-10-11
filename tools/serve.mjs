@@ -1,12 +1,12 @@
-// A local stand-in for GitHub Pages: the repo under /tokenz-arena-pages/, Range requests, 404.html
+// A local stand-in for GitHub Pages: the repo under /arena/, Range requests, 404.html
 // for missing files, and no COOP/COEP headers (the service worker adds those).
-//   node tools/serve.mjs [port]     then open http://localhost:<port>/tokenz-arena-pages/
+//   node tools/serve.mjs [port]     then open http://localhost:<port>/arena/
 import http from "node:http";
 import fs from "node:fs";
 import path from "node:path";
 
 const root = path.resolve(new URL("..", import.meta.url).pathname);
-const PREFIX = "/tokenz-arena-pages/";
+const PREFIX = "/arena/";
 const types = { ".html": "text/html", ".js": "text/javascript", ".mjs": "text/javascript", ".css": "text/css",
   ".json": "application/json", ".wasm": "application/wasm", ".map": "text/plain", ".gz": "application/gzip",
   ".zip": "application/zip", ".txt": "text/plain" };
