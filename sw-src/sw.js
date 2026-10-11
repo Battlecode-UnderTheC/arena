@@ -9,7 +9,7 @@ import { docPage, text as docText } from "./web/docs.js";
 import { comparePage } from "./web/compare.js";
 import { evalsPage, evalsGamePage } from "./web/evals.js";
 import * as viewer from "./web/viewer.js";
-import { api, dumps, ENGINE_DOWN } from "./api.js";
+import { api, dumps, READ_ONLY } from "./api.js";
 
 const BASE = new URL(self.registration.scope).pathname;          // "/tokenz-arena-pages/"
 const SITE = new URL(BASE, self.location.origin).href;
@@ -63,9 +63,24 @@ async function duelWatch(D, did, n) {
     { rerun: { a: g.seat_a, b: g.seat_b, seed: g.seed, map_sha: g.map_sha, wasm: await D.wasmFor([g.seat_a, g.seat_b]), rounds: g.rounds, winner: g.winner } }) };
 }
 
-// The arena's pages link from its root ("/s/x"); this site lives under BASE.
+// The arena's pages link from its root ("/s/x"); this site lives under BASE. Links written into the
+// HTML are prefixed here; links a page's own script builds later (duel tables, the queue) are
+// prefixed in the page as they appear.
+const LINKS = (base) => `<script>(() => {
+  const B = ${JSON.stringify(base)};
+  const fix = (n) => {
+    if (n.nodeType !== 1) return;
+    for (const a of n.matches("a[href],form[action]") ? [n] : []) {
+      const k = a.tagName === "FORM" ? "action" : "href", v = a.getAttribute(k);
+      if (v && v.startsWith("/") && !v.startsWith("//") && !v.startsWith(B)) a.setAttribute(k, B + v.slice(1));
+    }
+    n.querySelectorAll && n.querySelectorAll("a[href],form[action]").forEach(fix);
+  };
+  new MutationObserver((ms) => ms.forEach((m) => m.addedNodes.forEach(fix))).observe(document.documentElement, {subtree: true, childList: true});
+})();</script>`;
 function rebase(html) {
-  return html.replace(/(href|src|action)="\/(?!\/)/g, `$1="${BASE}`).replaceAll("__SITE_BASE__", BASE);
+  html = html.replace(/(href|src|action)="\/(?!\/)/g, `$1="${BASE}`).replaceAll("__SITE_BASE__", BASE);
+  return html.replace(/<head>/, "<head>\n" + LINKS(BASE));
 }
 
 const respond = (body, status, type, extra = {}) => new Response(body, { status, headers: { "Content-Type": type, ...ISOLATION, ...extra } });
@@ -75,7 +90,7 @@ async function handle(path, url, req) {
   const p = url.searchParams;
   try {
     if (path.startsWith("/api/")) {
-      if (!["GET", "HEAD"].includes(req.method)) return json({ detail: ENGINE_DOWN }, 503);
+      if (!["GET", "HEAD"].includes(req.method)) return json({ detail: READ_ONLY }, 503);
       const D = await open(SITE);
       const out = await api(D, path, p);
       if (out === undefined) return json({ detail: "Not Found" }, 404);

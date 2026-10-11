@@ -1,7 +1,10 @@
 // The arena's JSON API (api/http.py, api/duels.py, evals/web.py), read-only from the snapshot.
 import { HTTPError, VISITOR, pyRepr, pyBool } from "./web/pages.js";
 
-export const ENGINE_DOWN = "the arena engine is unavailable (ConnectError); try again in a moment";
+// The arena is a frozen snapshot: what needed its engine says so.
+export const READ_ONLY = "this is a read-only snapshot of the tokenz arena (frozen 2026-10-09): nothing can be submitted, changed or uploaded";
+export const NO_SERVER = "the competition-server bridge isn't part of this snapshot";
+export const NO_COMPARE = "comparisons aren't available in this snapshot: they need every game's in-game metrics, which it doesn't include";
 
 // json.dumps with seeds kept exact (64-bit integers)
 export function dumps(x) {
@@ -130,6 +133,7 @@ export async function api(D, path, p) {
     return { maps: Object.values(meta).filter((x) => x.suite === "custom"), hidden_uploads: Object.values(meta).filter((x) => x.suite === "holdout").length };
   }
   if (path === "/api/v1/whoami") return { owner: VISITOR, name: "browser", agent: p.get("agent") || null, tagged: true };
-  if (path.startsWith("/api/v1/server") || path.startsWith("/api/v1/workers") || path === "/api/v1/compare") throw new HTTPError(503, ENGINE_DOWN);
+  if (path.startsWith("/api/v1/server") || path.startsWith("/api/v1/workers")) throw new HTTPError(503, NO_SERVER);
+  if (path === "/api/v1/compare") throw new HTTPError(503, NO_COMPARE);
   return undefined;
 }

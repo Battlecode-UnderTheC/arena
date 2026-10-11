@@ -5090,7 +5090,7 @@ td.a { color: #2f7fd6; } td.b { color: #d9822b; } th.a { color: #2f7fd6; } th.b 
     const link = "/compare?" + urlencode({ a: A, b: B, scope, map });
     return layout(
       "Compare",
-      `<style>${CSS2}</style>${intro}${form}<p>No games with metrics for these yet.</p>`,
+      `<style>${CSS2}</style>${intro}${form}<div class="flash">Comparisons aren't available in this snapshot of the arena: they're computed from every game's in-game metrics, which the snapshot doesn't include. Each game's own metrics are on its page, computed when the browser re-runs it.</div>`,
       link.replace("/compare", "/api/v1/compare"),
       "/compare"
     );
@@ -5242,7 +5242,9 @@ td.heat { font-variant-numeric: tabular-nums; }
   }
 
   // sw-src/api.js
-  var ENGINE_DOWN = "the arena engine is unavailable (ConnectError); try again in a moment";
+  var READ_ONLY = "this is a read-only snapshot of the tokenz arena (frozen 2026-10-09): nothing can be submitted, changed or uploaded";
+  var NO_SERVER = "the competition-server bridge isn't part of this snapshot";
+  var NO_COMPARE = "comparisons aren't available in this snapshot: they need every game's in-game metrics, which it doesn't include";
   function dumps(x) {
     return JSON.stringify(x, (k, v) => k === "seed" && v != null && /^-?\d+$/.test(String(v)) ? `__SEED__${v}` : v).replace(/"__SEED__(-?\d+)"/g, "$1");
   }
@@ -5372,7 +5374,8 @@ td.heat { font-variant-numeric: tabular-nums; }
       return { maps: Object.values(meta).filter((x) => x.suite === "custom"), hidden_uploads: Object.values(meta).filter((x) => x.suite === "holdout").length };
     }
     if (path === "/api/v1/whoami") return { owner: VISITOR, name: "browser", agent: p.get("agent") || null, tagged: true };
-    if (path.startsWith("/api/v1/server") || path.startsWith("/api/v1/workers") || path === "/api/v1/compare") throw new HTTPError(503, ENGINE_DOWN);
+    if (path.startsWith("/api/v1/server") || path.startsWith("/api/v1/workers")) throw new HTTPError(503, NO_SERVER);
+    if (path === "/api/v1/compare") throw new HTTPError(503, NO_COMPARE);
     return void 0;
   }
 
@@ -5434,8 +5437,21 @@ td.heat { font-variant-numeric: tabular-nums; }
       { rerun: { a: g.seat_a, b: g.seat_b, seed: g.seed, map_sha: g.map_sha, wasm: await D.wasmFor([g.seat_a, g.seat_b]), rounds: g.rounds, winner: g.winner } }
     ) };
   }
+  var LINKS = (base) => `<script>(() => {
+  const B = ${JSON.stringify(base)};
+  const fix = (n) => {
+    if (n.nodeType !== 1) return;
+    for (const a of n.matches("a[href],form[action]") ? [n] : []) {
+      const k = a.tagName === "FORM" ? "action" : "href", v = a.getAttribute(k);
+      if (v && v.startsWith("/") && !v.startsWith("//") && !v.startsWith(B)) a.setAttribute(k, B + v.slice(1));
+    }
+    n.querySelectorAll && n.querySelectorAll("a[href],form[action]").forEach(fix);
+  };
+  new MutationObserver((ms) => ms.forEach((m) => m.addedNodes.forEach(fix))).observe(document.documentElement, {subtree: true, childList: true});
+})();<\/script>`;
   function rebase(html) {
-    return html.replace(/(href|src|action)="\/(?!\/)/g, `$1="${BASE}`).replaceAll("__SITE_BASE__", BASE);
+    html = html.replace(/(href|src|action)="\/(?!\/)/g, `$1="${BASE}`).replaceAll("__SITE_BASE__", BASE);
+    return html.replace(/<head>/, "<head>\n" + LINKS(BASE));
   }
   var respond = (body, status, type, extra = {}) => new Response(body, { status, headers: { "Content-Type": type, ...ISOLATION, ...extra } });
   var json = (x, status = 200) => respond(dumps(x), status, "application/json");
@@ -5443,7 +5459,7 @@ td.heat { font-variant-numeric: tabular-nums; }
     const p = url.searchParams;
     try {
       if (path.startsWith("/api/")) {
-        if (!["GET", "HEAD"].includes(req.method)) return json({ detail: ENGINE_DOWN }, 503);
+        if (!["GET", "HEAD"].includes(req.method)) return json({ detail: READ_ONLY }, 503);
         const D = await open(SITE);
         const out = await api(D, path, p);
         if (out === void 0) return json({ detail: "Not Found" }, 404);

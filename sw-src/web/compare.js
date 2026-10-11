@@ -1,5 +1,5 @@
-// arena/web/compare.py. The per-game metric series it charts aren't in this snapshot's data yet,
-// so a comparison takes the arena's own "no games with metrics" path.
+// arena/web/compare.py. The per-game metric series it charts aren't in this snapshot, so a
+// comparison says it's unavailable (the form stays).
 import { e, urlencode } from "../py.js";
 import { layout, HTTPError, pyRepr } from "./pages.js";
 
@@ -40,6 +40,8 @@ export async function comparePage(D, p) {
   };
   const A = resolve(a), B = resolve(b);
   const link = "/compare?" + urlencode({ a: A, b: B, scope, map });
-  return layout("Compare", `<style>${CSS}</style>${intro}${form}<p>No games with metrics for these yet.</p>`,
+  return layout("Compare", `<style>${CSS}</style>${intro}${form}<div class="flash">Comparisons aren't available in this snapshot of the arena: `
+    + "they're computed from every game's in-game metrics, which the snapshot doesn't include. Each game's own metrics are on its "
+    + "page, computed when the browser re-runs it.</div>",
     link.replace("/compare", "/api/v1/compare"), "/compare");
 }
