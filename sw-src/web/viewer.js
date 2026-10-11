@@ -124,6 +124,15 @@ const show = (bytes, name) => {
     onRound: (m) => say(\`re-running this game in your browser (the official engine and both bots' metered wasm): <b>round \${m.round + 1}</b> · dragons \${m.alive[0]} vs \${m.alive[1]} · \${m.seconds.toFixed(0)} s\`),
     onPartial: (m) => show(m.replay, \`\${R.a} vs \${R.b} (live, round \${m.round})\`) });
   show(res.replay, document.title);
+  try {                  // the eval strip, from the replay's metrics (arena/web/evalstrip.py)
+    const [{ computeMetrics }, { mountStrip }, describe] = await Promise.all([import(new URL("runner/metrics.js", base)),
+      import(new URL("runner/evalstrip.js", base)), fetch(new URL("api/v1/metrics", base)).then((x) => x.json())]);
+    const m = await computeMetrics(res.replay);
+    if (m.rounds.length) {
+      mountStrip(m, R.names || { A: R.a, B: R.b }, describe, bar);
+      document.documentElement.style.setProperty("--arena-header", "110px");
+    }
+  } catch (err) { console.warn("metrics:", err); }
   const same = res.winner === R.winner && res.rounds === R.rounds;
   say(\`re-run in \${((performance.now() - t0) / 1000).toFixed(0)} s: <span class="\${same ? "ok" : "no"}">\${same ? "the same result as the arena recorded" : "a different result from the arena's record"}</span> (\${res.winner ? res.winner + " wins" : "draw"} after \${res.rounds} rounds, \${res.reason}) · <a href="\${urlNow}" download="\${R.a}-vs-\${R.b}.replay">download replay</a>\`);
 })().catch((err) => say("re-run failed: " + String(err && err.message || err).replace(/</g, "&lt;")));

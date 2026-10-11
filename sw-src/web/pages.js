@@ -728,7 +728,7 @@ export async function gamePage(D, gid) {
   if (g.runnable) {
     return { html: viewer.page(`/api/v1/games/${g.id}/replay`, `${names.A} vs ${names.B} on ${g.map}`,
       { header, head: GAME_HEAD + `<style>${SRC_CSS}</style>`, teamNames: names,
-        rerun: { a: g.a, b: g.b, seed: g.seed, map_sha: g.map_sha, wasm: await D.wasmFor([g.a, g.b]), rounds: g.rounds, winner: g.winner } }) };
+        rerun: { a: g.a, b: g.b, names, seed: g.seed, map_sha: g.map_sha, wasm: await D.wasmFor([g.a, g.b]), rounds: g.rounds, winner: g.winner } }) };
   }
   const body = `<h1>Game ${g.id}</h1><div class="kv">
 <div>seats</div><div>A ${subLink(D, g.a)} vs B ${subLink(D, g.b)}</div>
