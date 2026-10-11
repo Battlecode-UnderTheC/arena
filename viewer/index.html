@@ -1,0 +1,54 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>replay</title>
+<link rel="stylesheet" href="webview.css">
+<style>
+:root {
+  --vscode-font-family: system-ui, -apple-system, "Segoe UI", sans-serif;
+  --vscode-editor-font-family: ui-monospace, "SF Mono", Menlo, monospace;
+  --vscode-font-size: 13px;
+  --vscode-foreground: #cccccc; --vscode-descriptionForeground: #9d9d9d; --vscode-disabledForeground: #6b6b6b;
+  --vscode-errorForeground: #f48771; --vscode-focusBorder: #0078d4; --vscode-editor-background: #1e1e1e;
+  --vscode-sideBar-background: #181818; --vscode-panel-border: #2b2b2b; --vscode-widget-border: #313131;
+  --vscode-input-background: #313131; --vscode-button-background: #0078d4; --vscode-button-foreground: #ffffff;
+  --vscode-button-hoverBackground: #026ec1; --vscode-button-secondaryBackground: #313131;
+  --vscode-button-secondaryForeground: #cccccc; --vscode-button-secondaryHoverBackground: #3c3c3c;
+  --vscode-toolbar-activeBackground: #3c3c3c; --vscode-toolbar-hoverBackground: #2a2a2a;
+  --vscode-charts-blue: #3794ff; --vscode-charts-orange: #d18616; --vscode-charts-red: #f14c4c;
+  --vscode-charts-yellow: #cca700; --vscode-charts-green: #89d185;
+}
+html, body { margin: 0; height: 100%; background: var(--vscode-editor-background); color: var(--vscode-foreground);
+  font-family: var(--vscode-font-family); }
+body { display: flex; flex-direction: column; }
+#app { flex: 1; min-height: 0; }
+</style>
+<script>
+// The unswbc replay viewer (the toolkit's VS Code webview bundle) in a plain page. Its only tie to
+// VS Code is acquireVsCodeApi().postMessage({type: "ready"}); the host page answers through
+// window.postMessage with {type: "open", name, url} (a replay) or {type: "map", text}.
+// The parent page sends that message to this frame; we hold it until the bundle is ready.
+(() => {
+  let ready = false, pending = null;
+  const deliver = () => { if (ready && pending) { window.postMessage(pending, "*"); pending = null; } };
+  window.addEventListener("message", (e) => {
+    if (e.source === window.parent && e.data && e.data.__viewer) {
+      const { __viewer, ...m } = e.data;
+      pending = m;
+      deliver();
+    }
+  });
+  window.acquireVsCodeApi = () => ({
+    postMessage(m) { if (m && m.type === "ready") { ready = true; deliver(); window.parent.postMessage({ __viewerReady: true }, "*"); } },
+    getState() { return undefined; },
+    setState() {},
+  });
+})();
+</script>
+</head>
+<body><div id="app" data-view="replay"></div>
+<script>document.getElementById("app").dataset.view = new URLSearchParams(location.search).get("view") || "replay";</script>
+<script src="webview.js"></script></body>
+</html>
