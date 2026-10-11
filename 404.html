@@ -1,0 +1,27 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>tokenz-arena</title>
+<style>html,body{margin:0;background:#15171a;color:#e3e5e8;font:14px/1.45 system-ui,-apple-system,"Segoe UI",sans-serif}main{padding:16px}</style>
+</head>
+<body>
+<main id="m">Starting the arena in your browser…</main>
+<script>
+// The arena's backend runs in this site's service worker; the first visit installs it.
+(async () => {
+  const m = document.getElementById("m");
+  const base = new URL("./", document.currentScript ? document.currentScript.src || location.href : location.href);
+  const scope = "/tokenz-arena-pages/";
+  if (!("serviceWorker" in navigator)) { m.textContent = "This browser has no service workers, which this site needs."; return; }
+  if (navigator.serviceWorker.controller) { m.textContent = '{"detail":"Not Found"}'; return; }
+  try {
+    await navigator.serviceWorker.register(scope + "sw.js", { scope });
+    await navigator.serviceWorker.ready;
+    location.reload();
+  } catch (err) { m.textContent = "Couldn't start the service worker: " + err; }
+})();
+</script>
+</body>
+</html>

@@ -3,27 +3,25 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>tokenz arena</title>
-<meta name="description" content="The tokenz team arena for unswbc dragons bots: leaderboard, bots, games, duels and maps, with replays re-run in your browser.">
-<!-- GitHub Pages can't send COOP/COEP; this service worker adds them so the game runner gets SharedArrayBuffer. -->
-<script src="coi-serviceworker.min.js"></script>
-<link rel="stylesheet" href="app/style.css">
-<script src="vendor/index.js"></script>
+<title>tokenz-arena</title>
+<style>html,body{margin:0;background:#15171a;color:#e3e5e8;font:14px/1.45 system-ui,-apple-system,"Segoe UI",sans-serif}main{padding:16px}</style>
 </head>
 <body>
-<header class="top">
-  <a class="brand" href="#/">tokenz arena</a>
-  <nav>
-    <a href="#/">Leaderboard</a>
-    <a href="#/bots">Bots</a>
-    <a href="#/games">Games</a>
-    <a href="#/duels">Duels</a>
-    <a href="#/maps">Maps</a>
-    <a href="#/server">Server</a>
-    <a href="#/about">About</a>
-  </nav>
-</header>
-<main id="main"><p class="muted">Loading…</p></main>
-<script type="module" src="app/app.js"></script>
+<main id="m">Starting the arena in your browser…</main>
+<script>
+// The arena's backend runs in this site's service worker; the first visit installs it.
+(async () => {
+  const m = document.getElementById("m");
+  const base = new URL("./", document.currentScript ? document.currentScript.src || location.href : location.href);
+  const scope = "/tokenz-arena-pages/";
+  if (!("serviceWorker" in navigator)) { m.textContent = "This browser has no service workers, which this site needs."; return; }
+  if (navigator.serviceWorker.controller) { m.textContent = '{"detail":"Not Found"}'; return; }
+  try {
+    await navigator.serviceWorker.register(scope + "sw.js", { scope });
+    await navigator.serviceWorker.ready;
+    location.reload();
+  } catch (err) { m.textContent = "Couldn't start the service worker: " + err; }
+})();
+</script>
 </body>
 </html>

@@ -1,0 +1,12 @@
+{
+  "name": "tokenz-arena-pages",
+  "private": true,
+  "description": "The tokenz arena's own website, with its backend in a service worker (sw-src/ -> sw.js)",
+  "scripts": {
+    "build": "esbuild sw-src/sw.js --bundle --format=iife --target=es2022 --outfile=sw.js --define:import.meta.url=self.location.href --log-level=warning && cp node_modules/wa-sqlite/dist/wa-sqlite-async.wasm vendor/"
+  },
+  "devDependencies": {
+    "esbuild": "0.25.5",
+    "wa-sqlite": "1.0.0"
+  }
+}
