@@ -12,13 +12,19 @@
 // The arena's backend runs in this site's service worker; the first visit installs it.
 (async () => {
   const m = document.getElementById("m");
-  const base = new URL("./", document.currentScript ? document.currentScript.src || location.href : location.href);
   const scope = "/tokenz-arena-pages/";
   if (!("serviceWorker" in navigator)) { m.textContent = "This browser has no service workers, which this site needs."; return; }
-  if (navigator.serviceWorker.controller) { m.textContent = '{"detail":"Not Found"}'; return; }
+  const ctl = navigator.serviceWorker.controller;
+  // ours is in control and still sent us here: the URL really isn't one of the arena's
+  if (ctl && new URL(ctl.scriptURL).pathname === scope + "sw.js") { m.textContent = '{"detail":"Not Found"}'; return; }
   try {
-    await navigator.serviceWorker.register(scope + "sw.js", { scope });
-    await navigator.serviceWorker.ready;
+    // installs it, or replaces an older worker at this scope (an earlier version of the site)
+    const reg = await navigator.serviceWorker.register(scope + "sw.js", { scope, updateViaCache: "none" });
+    await reg.update().catch(() => {});
+    const w = reg.installing || reg.waiting || reg.active;
+    if (w && w.state !== "activated") await new Promise((r) => w.addEventListener("statechange", () => w.state === "activated" && r()));
+    if (sessionStorage.getItem("tap-reloaded") === location.href) { m.textContent = "Couldn't start the arena (reload the page)."; sessionStorage.removeItem("tap-reloaded"); return; }
+    sessionStorage.setItem("tap-reloaded", location.href);
     location.reload();
   } catch (err) { m.textContent = "Couldn't start the service worker: " + err; }
 })();
